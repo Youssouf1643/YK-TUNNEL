@@ -2,6 +2,7 @@ package com.yktunnel.app
 
 import android.app.Activity
 import android.os.Bundle
+import android.net.Uri
 import android.graphics.Color
 import android.graphics.Typeface
 import android.view.Gravity
@@ -25,6 +26,13 @@ class MainActivity : Activity() {
     private lateinit var portInput: EditText
     private lateinit var passwordInput: EditText
     private lateinit var statusText: TextView
+
+    private val pickConfigFile =
+        registerForActivityResult(
+            android.app.ActivityResultContracts.OpenDocument()
+        ) { uri: Uri? ->
+            if (uri != null) handleConfigFile(uri)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,6 +115,20 @@ class MainActivity : Activity() {
             ViewGroup.LayoutParams.MATCH_PARENT, dp(52)
         ).apply { topMargin = dp(20) })
 
+        val importButton = Button(this).apply {
+            text = "IMPORTER UN FICHIER .ZIV"
+            textSize = 14f
+            setTextColor(pale)
+            setBackgroundColor(Color.rgb(36, 51, 78))
+            isAllCaps = false
+            setOnClickListener {
+                pickConfigFile.launch(arrayOf("*/*"))
+            }
+        }
+        card.addView(importButton, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dp(48)
+        ).apply { topMargin = dp(10) })
+
         val disconnect = Button(this).apply {
             text = "DÉCONNECTER"
             textSize = 14f
@@ -139,6 +161,13 @@ class MainActivity : Activity() {
             setTextColor(Color.rgb(105, 127, 160))
             gravity = Gravity.CENTER
         }, matchWrap().apply { topMargin = dp(12) })
+    }
+
+    private fun handleConfigFile(uri: Uri) {
+        showStatus(
+            "Fichier sélectionné. Le format .ziv reste à analyser.",
+            true
+        )
     }
 
     private fun onConnectPressed() {
