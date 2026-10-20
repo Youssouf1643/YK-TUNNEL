@@ -3,6 +3,7 @@ package com.yktunnel.app
 import android.app.Activity
 import android.os.Bundle
 import android.net.Uri
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.view.Gravity
@@ -27,12 +28,6 @@ class MainActivity : Activity() {
     private lateinit var passwordInput: EditText
     private lateinit var statusText: TextView
 
-    private val pickConfigFile =
-        registerForActivityResult(
-            android.app.ActivityResultContracts.OpenDocument()
-        ) { uri: Uri? ->
-            if (uri != null) handleConfigFile(uri)
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,7 +117,12 @@ class MainActivity : Activity() {
             setBackgroundColor(Color.rgb(36, 51, 78))
             isAllCaps = false
             setOnClickListener {
-                pickConfigFile.launch(arrayOf("*/*"))
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                }
+                @Suppress("DEPRECATION")
+                startActivityForResult(intent, 1001)
             }
         }
         card.addView(importButton, LinearLayout.LayoutParams(
@@ -161,6 +161,15 @@ class MainActivity : Activity() {
             setTextColor(Color.rgb(105, 127, 160))
             gravity = Gravity.CENTER
         }, matchWrap().apply { topMargin = dp(12) })
+    }
+
+    @Deprecated("Utilise le résultat du sélecteur Android")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1001 && resultCode == RESULT_OK) {
+            val uri = data?.data
+            if (uri != null) handleConfigFile(uri)
+        }
     }
 
     private fun handleConfigFile(uri: Uri) {
