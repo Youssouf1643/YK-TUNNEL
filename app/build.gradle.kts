@@ -24,3 +24,8 @@ android {
         jvmTarget = "17"
     }
 }
+
+
+dependencies {
+    implementation("com.github.singbox-android:libbox:1.14.3")
+}
