@@ -173,10 +173,52 @@ class MainActivity : Activity() {
     }
 
     private fun handleConfigFile(uri: Uri) {
-        showStatus(
-            "Fichier sélectionné. Le format .ziv reste à analyser.",
-            true
-        )
+        try {
+            val content = contentResolver.openInputStream(uri)
+                ?.bufferedReader(Charsets.UTF_8)
+                ?.use { it.readText() }
+                ?: throw Exception("Impossible de lire le fichier.")
+
+            fun findValue(vararg keys: String): String? {
+                for (key in keys) {
+                    val regex = Regex(
+                        """(?im)^\s*["']?${Regex.escape(key)}["']?\s*[:=]\s*["']?([^"' \r\n,}]+)"""
+                    )
+                    val match = regex.find(content)
+                    if (match != null) return match.groupValues[1].trim()
+                }
+                return null
+            }
+
+            val host = findValue("server", "host", "ip", "address")
+            val port = findValue("port", "udp_port")
+            val password = findValue("password", "pass")
+
+            if (host == null && port == null && password == null) {
+                showStatus(
+                    "Format non reconnu : les paramètres n'ont pas été importés.",
+                    true
+                )
+                return
+            }
+
+            if (host != null) serverInput.setText(host)
+            if (port != null && port.toIntOrNull() in 1..65535) {
+                portInput.setText(port)
+            }
+            if (password != null) passwordInput.setText(password)
+
+            val count = listOf(host, port, password).count { it != null }
+            showStatus(
+                "$count paramètre(s) importé(s). Vérifie les champs avant de continuer.",
+                false
+            )
+        } catch (e: Exception) {
+            showStatus(
+                "Lecture impossible : ${e.message ?: "fichier invalide"}.",
+                true
+            )
+        }
     }
 
     private fun onConnectPressed() {
